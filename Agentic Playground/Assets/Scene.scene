@@ -964,6 +964,8 @@
   ScriptInputsDefault:
     _drawDebug: true
     sphereCastEnabled: true
+    spherecastRadii: true
+    spherecastDistanceThresholds: true
     _maxRaycastDistance: true
     indirectTargetingVolumeMultiplier: true
     indirectDragThreshold: true
@@ -978,8 +980,12 @@
       sphereCastEnabled: false
       spherecastRadii: !<float[]>
         - 0.500000
+        - 2.000000
+        - 4.000000
       spherecastDistanceThresholds: !<float[]>
         - 0.000000
+        - 12.000000
+        - 30.000000
       _maxRaycastDistance: !<float> 500.000000
       indirectTargetingVolumeMultiplier: !<float> 1.000000
       indirectDragThreshold: !<float> 3.000000
@@ -1426,6 +1432,7 @@
     pinkyMidJoint: true
     pinkyUpperJoint: true
     pinkyTip: true
+    unitPlaneMesh: true
     tipGlowRenderOrder: true
     tipGlowWorldScale: true
     triggeredLerpDurationSeconds: true
@@ -1439,8 +1446,15 @@
     pinchExponentTriggered: true
     pinchHighlightThresholdFar: true
     pinchHighlightThresholdNear: true
+    pokeBrightnessMax: true
     pokeGlowBrightnessMax: true
+    pokeTriggeredMult: true
+    pokeHighlightThresholdFar: true
+    pokeHighlightThresholdNear: true
+    pokeOccludeThresholdFar: true
     pokeOccludeThresholdNear: true
+    pokeExponent: true
+    pokeExponentTriggered: true
     overrides: true
   ScriptTypesDefault:
     {}
@@ -1483,7 +1497,7 @@
       pinkyMidJoint: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       pinkyUpperJoint: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       pinkyTip: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
-      unitPlaneMesh: !<reference.RenderMesh> a453f19f-0832-419f-bd8f-b3296b433b23
+      unitPlaneMesh: !<reference.RenderMesh> 00000000-0000-0000-0000-000000000000
       tipGlowMaterial: !<reference.Material> 26460eea-cbec-488e-aefd-efde6c5d0085
       tipGlowRenderOrder: !<float> 10000.000000
       tipGlowWorldScale: 0.300000
@@ -5108,6 +5122,7 @@
     pinkyMidJoint: true
     pinkyUpperJoint: true
     pinkyTip: true
+    unitPlaneMesh: true
     tipGlowRenderOrder: true
     tipGlowWorldScale: true
     triggeredLerpDurationSeconds: true
@@ -5121,8 +5136,15 @@
     pinchExponentTriggered: true
     pinchHighlightThresholdFar: true
     pinchHighlightThresholdNear: true
+    pokeBrightnessMax: true
     pokeGlowBrightnessMax: true
+    pokeTriggeredMult: true
+    pokeHighlightThresholdFar: true
+    pokeHighlightThresholdNear: true
+    pokeOccludeThresholdFar: true
     pokeOccludeThresholdNear: true
+    pokeExponent: true
+    pokeExponentTriggered: true
     overrides: true
   ScriptTypesDefault:
     {}
@@ -5165,7 +5187,7 @@
       pinkyMidJoint: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       pinkyUpperJoint: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
       pinkyTip: !<reference.SceneObject> 00000000-0000-0000-0000-000000000000
-      unitPlaneMesh: !<reference.RenderMesh> a453f19f-0832-419f-bd8f-b3296b433b23
+      unitPlaneMesh: !<reference.RenderMesh> 00000000-0000-0000-0000-000000000000
       tipGlowMaterial: !<reference.Material> 26460eea-cbec-488e-aefd-efde6c5d0085
       tipGlowRenderOrder: !<float> 10000.000000
       tipGlowWorldScale: 0.300000
@@ -6581,13 +6603,12 @@
   Enabled: true
   ScriptAsset: !<reference> c95c83e9-7ae1-4d58-a092-f95c6c5b9bfa
   ScriptInputsDefault:
-    openAIToken: true
     snapToken: true
   ScriptTypesDefault:
     {}
   ScriptInputs:
     "":
-      openAIToken: "[INSERT OPENAI TOKEN HERE]"
+      openAIToken: d162008e-15d1-45e7-b9e9-4be1009465f9
       googleToken: "[INSERT GO0GLE TOKEN HERE]"
       snapToken: "[INSERT SNAP TOKEN HERE]"
   ScriptTypes:
