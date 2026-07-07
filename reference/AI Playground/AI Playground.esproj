@@ -13,9 +13,9 @@ metaInfo:
     []
   tags:
     []
-  lensName: Agentic Playground
+  lensName: AI Playground
   lensDescriptors:
-    - EXPERIMENTAL_API
+    []
   lensApplicability:
     - Front
     - Back
@@ -24,7 +24,7 @@ metaInfo:
   platformBundlesEnabled: false
   iconHash: ""
   videoPreviewHash: ""
-  fromTemplateName: Agentic Playground
+  fromTemplateName: AI Playground
   fromTemplateUrl: Lens Studio 5.15.3.26011319
   activationCamera: Front
   sourceMapEnabled: false
@@ -39,5 +39,5 @@ metaInfo:
     minor: 0
     patch: 0
     build: 0
-  documentId: 042a593f-f61d-4459-8c1f-695683872011
-  originalDocumentId: 042a593f-f61d-4459-8c1f-695683872011
+  documentId: 3656964e-342b-48e3-ac46-9b611808b314
+  originalDocumentId: 3656964e-342b-48e3-ac46-9b611808b314

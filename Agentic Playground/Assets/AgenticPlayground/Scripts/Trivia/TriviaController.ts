@@ -1,18 +1,27 @@
 /**
- * TriviaController - SnapStudy Trivia MVP (stepping stone)
+ * TriviaController — SnapStudy voice-in / voice-out flashcards (final product).
  *
- * Displays a trivia question on a head-locked Text panel, then listens (mic) for
- * the user's spoken answer via the on-device AsrModule. If the recognized speech
- * contains the card's answer (lenient, normalized contains-match), it advances to
- * the next question; otherwise it stays on the current question and keeps listening.
+ * Per IdleStudy_SPEC.md: a single linear flashcard session driven entirely by
+ * four spoken commands, with every prompt/answer/summary spoken aloud via the
+ * built-in, on-device TextToSpeechModule (no internet / no API tokens).
  *
- * This is a deliberate stepping stone toward the eventual voice-only / TTS build
- * described in IdleStudy_SPEC.md — no voice output, command words, or summary yet.
+ *   "flip"   (show answer / reveal)      -> speak the back of the current card
+ *   "got it" (correct / know it)         -> mark known, advance, speak next front
+ *   "again"  (review / not yet)          -> re-queue card at end, speak next front
+ *   "end"    (I'm done / stop)           -> speak the summary and end the session
  *
- * Voice pattern mirrors Scripts/ASR/ChatASRController.ts (require("LensStudio:AsrModule")).
+ * Deviations from the spec, locked with the user:
+ *  - Voice input uses AsrModule + keyword matching (not VoiceML) — already
+ *    validated on Spectacles hardware.
+ *  - The on-screen Text panel is kept as a demo/debug aid, mirroring spoken text
+ *    (the spec's final product is voice-only; this is an intentional hybrid).
+ *
+ * Mic-mute guard (spec Section 6/10): the app never transcribes while TTS audio
+ * is playing, so it cannot hear its own voice as a command.
  */
 
 interface Card {
+  id: string
   front: string
   back: string
 }
@@ -20,96 +29,216 @@ interface Card {
 @component
 export class TriviaController extends BaseScriptComponent {
   @input
-  @hint("Text component that displays the current question")
+  @hint("On-screen Text used as a demo/debug aid (mirrors whatever is spoken)")
   private questionText: Text
 
   @input
-  @hint("Silence (ms) before a spoken answer is finalized")
-  private silenceMs: number = 2000
+  @hint("AudioComponent that plays the synthesized TTS audio")
+  private audioComponent: AudioComponent
+
+  @input
+  @hint("TTS voice name (built-in). Supported: Sasha")
+  private voiceName: string = "Sasha"
+
+  @input
+  @hint("Silence (ms) before a spoken command is finalized")
+  private silenceMs: number = 1500
 
   @input
   @hint("Enable debug logging")
   private enableDebugLogging: boolean = true
 
   private asrModule: AsrModule = require("LensStudio:AsrModule")
-  private cards: Card[] = []
-  private index: number = 0
-  private finished: boolean = false
+  private tts: TextToSpeechModule = require("LensStudio:TextToSpeechModule")
+
+  // Deck (lookup by id)
+  private cardsById: {[id: string]: Card} = {}
+
+  // Session state (spec Section 5) — resets every launch, no persistence
+  private queue: string[] = []
+  private currentCardId: string = null
+  private backSpoken: boolean = false
+  private knownCount: number = 0
+  private reviewedCount: number = 0
+  private sessionEnded: boolean = false
+  private isSpeaking: boolean = false
+
   private restartEvent: DelayedCallbackEvent
 
+  // Command synonym sets (spec Section 4), matched against normalized speech.
+  private static FLIP = ["flip", "show answer", "reveal"]
+  private static GOT_IT = ["got it", "correct", "know it"]
+  private static AGAIN = ["again", "review", "not yet"]
+  private static END = ["end", "im done", "i am done", "done", "stop"]
+
   onAwake(): void {
-    // Reusable delayed callback used to re-arm the mic between attempts/cards.
-    // Prevents any tight restart loop if ASR errors/finalizes rapidly.
+    // Reusable delayed callback used to re-arm the mic between utterances.
     this.restartEvent = this.createEvent("DelayedCallbackEvent")
     this.restartEvent.bind(() => this.listen())
-
     this.createEvent("OnStartEvent").bind(() => this.initialize())
   }
 
   private initialize(): void {
-    this.cards = this.loadDeck()
-    if (!this.cards || this.cards.length === 0) {
-      this.setText("No cards found in the deck.")
+    const deck = JSON.parse(DECK_JSON)
+    this.queue = []
+    deck.cards.forEach((c: any) => {
+      this.cardsById[c.id] = {id: c.id, front: c.front, back: c.back}
+      this.queue.push(c.id)
+    })
+    if (this.queue.length === 0) {
+      this.setText("No cards in deck.")
       return
     }
-    this.index = 0
-    this.finished = false
-    this.showCurrentCard()
-    this.listen()
+    this.currentCardId = this.queue[0]
+    this.backSpoken = false
+    this.log(`Session start: ${this.queue.length} cards`)
+    this.speak(this.currentCard().front)
   }
 
-  /**
-   * Parse the bundled deck. NOTE: this Lens Studio SDK exposes no scripting API
-   * for reading an imported .json/.txt file's contents (no JsonAsset/TextAsset
-   * class, no getText()/.json accessor), so the deck is embedded in DECK_JSON
-   * below. Keep DECK_JSON in sync with Assets/AgenticPlayground/Data/deck.json,
-   * which remains the human-editable source of record.
-   */
-  private loadDeck(): Card[] {
-    const parsed = JSON.parse(DECK_JSON)
-    this.log(`Loaded ${parsed.cards.length} cards from bundled deck`)
-    return parsed.cards.map((c: any) => ({front: c.front, back: c.back}))
+  private currentCard(): Card {
+    return this.cardsById[this.currentCardId]
   }
 
-  private showCurrentCard(): void {
-    if (this.index >= this.cards.length) {
-      this.finished = true
-      this.setText("You've reached the end of the deck. Nice work!")
-      this.log("Deck complete")
-      return
-    }
-    this.setText(this.cards[this.index].front)
-    this.log(`Card ${this.index + 1}/${this.cards.length}: ${this.cards[this.index].front}`)
-  }
+  // ---------- Listening ----------
 
-  /**
-   * Listen for one spoken answer, evaluate it, then re-arm for the next attempt.
-   */
   private listen(): void {
-    if (this.finished) return
+    if (this.sessionEnded || this.isSpeaking) return
     this.startTranscribing()
-      .then((spoken) => this.evaluate(spoken))
-      .catch((err) => this.log(`Listen error: ${err}`))
-      .then(() => this.scheduleListen(0.3))
+      .then((text) => this.handleTranscript(text))
+      .catch(() => this.scheduleListen(0.3))
   }
 
   private scheduleListen(delaySeconds: number): void {
-    if (this.finished) return
+    if (this.sessionEnded || this.isSpeaking) return
     this.restartEvent.reset(delaySeconds)
   }
 
-  private evaluate(spoken: string): void {
-    const card = this.cards[this.index]
-    if (!card) return
-    const heard = this.normalize(spoken)
-    const answer = this.normalize(card.back)
-    const correct = answer.length > 0 && heard.indexOf(answer) !== -1
-    this.log(`Heard "${spoken}" -> ${correct ? "CORRECT" : "no match"} (answer: "${card.back}")`)
-    if (correct) {
-      this.index++
-      this.showCurrentCard()
+  private handleTranscript(text: string): void {
+    // runCommand returns true if it triggered speech (speak() owns listen resume).
+    const startedSpeaking = this.runCommand(text)
+    if (!startedSpeaking) this.scheduleListen(0.3)
+  }
+
+  /** Interpret a spoken utterance as a command. Returns true iff it started speech. */
+  private runCommand(text: string): boolean {
+    const heard = this.normalize(text)
+
+    // "end" first — it is allowed to interrupt at any (listening) moment.
+    if (this.matches(heard, TriviaController.END)) {
+      this.log("Command: end")
+      this.endSession()
+      return true
     }
-    // If not correct, stay on the current card; scheduleListen() re-arms the mic.
+    if (this.matches(heard, TriviaController.FLIP)) {
+      if (this.backSpoken) {
+        this.log('Ignored "flip" (answer already given)')
+        return false
+      }
+      this.log("Command: flip")
+      this.backSpoken = true
+      this.speak(this.currentCard().back)
+      return true
+    }
+    if (this.matches(heard, TriviaController.GOT_IT)) {
+      if (!this.backSpoken) {
+        this.log('Ignored "got it" (answer not given yet)')
+        return false
+      }
+      this.log("Command: got it")
+      this.knownCount += 1
+      this.reviewedCount += 1
+      return this.advanceCard()
+    }
+    if (this.matches(heard, TriviaController.AGAIN)) {
+      if (!this.backSpoken) {
+        this.log('Ignored "again" (answer not given yet)')
+        return false
+      }
+      this.log("Command: again")
+      this.queue.push(this.currentCardId) // re-queue at the end
+      this.reviewedCount += 1
+      return this.advanceCard()
+    }
+
+    this.log(`Unrecognized: "${text}"`)
+    return false
+  }
+
+  /** Move to the next card, or end if the deck is exhausted. Always starts speech. */
+  private advanceCard(): boolean {
+    this.queue.shift() // remove current from the front
+    if (this.queue.length === 0) {
+      this.endSession()
+      return true
+    }
+    this.currentCardId = this.queue[0]
+    this.backSpoken = false
+    this.speak(this.currentCard().front)
+    return true
+  }
+
+  private endSession(): void {
+    this.sessionEnded = true
+    // Spec Section 6 wording (avoids command trigger words).
+    const summary = `Session complete. You reviewed ${this.reviewedCount} cards and got ${this.knownCount} right.`
+    this.speak(summary)
+  }
+
+  // ---------- Speaking (on-device TTS) with mic-mute guard ----------
+
+  private speak(text: string): void {
+    this.isSpeaking = true
+    this.setText(text) // mirror on the demo panel
+    this.log(`Speaking: "${text}"`)
+
+    // Guarantee the mic is off while speaking (self-trigger guard).
+    try {
+      this.asrModule.stopTranscribing()
+    } catch (e) {
+      // nothing was transcribing
+    }
+
+    const options = TextToSpeech.Options.create()
+    if (this.voiceName) {
+      options.voiceName = this.voiceName
+    }
+
+    this.tts.synthesize(
+      text,
+      options,
+      (audioTrackAsset: AudioTrackAsset) => {
+        if (!this.audioComponent) {
+          this.log("No AudioComponent wired — cannot play TTS audio")
+          this.onSpeakDone()
+          return
+        }
+        this.audioComponent.audioTrack = audioTrackAsset
+        this.audioComponent.setOnFinish(() => this.onSpeakDone())
+        this.audioComponent.play(1)
+      },
+      (error: number, description: string) => {
+        print(`TriviaController: TTS error ${error}: ${description}`)
+        this.onSpeakDone() // never get stuck muted
+      }
+    )
+  }
+
+  private onSpeakDone(): void {
+    this.isSpeaking = false
+    if (this.sessionEnded) {
+      this.log("Session ended.")
+      return
+    }
+    this.scheduleListen(0.2)
+  }
+
+  // ---------- Helpers ----------
+
+  private matches(heard: string, synonyms: string[]): boolean {
+    for (let i = 0; i < synonyms.length; i++) {
+      if (heard.indexOf(synonyms[i]) !== -1) return true
+    }
+    return false
   }
 
   /** Lowercase, strip punctuation, collapse whitespace. */
@@ -133,16 +262,13 @@ export class TriviaController extends BaseScriptComponent {
     }
   }
 
-  /**
-   * Single-shot transcription that resolves with the final recognized string.
-   * Mirrors the AsrModule usage in ChatASRController.createASROptions().
-   */
+  /** Single-shot transcription that resolves with the final recognized string. */
   private startTranscribing(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       try {
         this.asrModule.stopTranscribing()
       } catch (e) {
-        // ignore — nothing was transcribing
+        // nothing was transcribing
       }
 
       const options = AsrModule.AsrTranscriptionOptions.create()
@@ -153,9 +279,9 @@ export class TriviaController extends BaseScriptComponent {
       options.onTranscriptionUpdateEvent.add((asrOutput) => {
         if (!asrOutput.isFinal || settled) return
         settled = true
-        const text = asrOutput.text.trim()
-        if (text.length > 0) {
-          resolve(text)
+        const t = asrOutput.text.trim()
+        if (t.length > 0) {
+          resolve(t)
         } else {
           reject("empty transcription")
         }

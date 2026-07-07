@@ -26,6 +26,7 @@
     - !<own> 3cf0b0bf-5a83-4fb2-9a1a-0b512f612e00
     - !<own> c64adc44-a985-40a3-bd8e-68f8b92aaad7
     - !<own> 774711fa-f3a1-4241-a6a8-dc54fae75167
+    - !<own> 3b7bb3bd-d1cd-43dc-8e43-6df61d439ab1
   layers: !<Layers/267ee9a7-aff2-4f9d-9a49-f71214747d03>
     userLayers:
       []
@@ -168,7 +169,7 @@
   PrefabRemaps:
     []
   Name: ModelGen
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -183,7 +184,7 @@
   PrefabRemaps:
     []
   Name: ManipulateParent
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 50.000000, z: -90.000000}
@@ -275,7 +276,7 @@
   PrefabRemaps:
     []
   Name: ManipulateParent
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: -40.000000, z: -90.000000}
@@ -1308,7 +1309,7 @@
   PrefabRemaps:
     []
   Name: APIKeyWarning
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -1319,6 +1320,87 @@
     - !<own> 9bcad24f-5fa1-40b2-afe9-ee65ff96a4ec
   Components:
     - !<own> cf2d487a-c686-49ad-bf06-facc5cb6cc72
+- !<Text/36bb5024-2dd5-4f81-8d8d-b0b0acf633c3>
+  PrefabRemaps:
+    []
+  Name: Text
+  Enabled: true
+  RenderOrder: 0
+  StretchMode: Stretch
+  VerticalAlignment: Center
+  HorizontalAlignment: Center
+  MeshShadowMode: None
+  ShadowColor: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+  ShadowDensity: 1.000000
+  Text: Loading trivia...
+  Editable: false
+  ShowEditingPreview: true
+  TouchHandler: !<reference> 00000000-0000-0000-0000-000000000000
+  SizeToFit: false
+  FontSize: 48
+  Font: !<reference> 00000000-0000-0000-0000-000000000000
+  LayoutRect:
+    left: -7.500000
+    bottom: -2.250000
+    right: 7.500000
+    top: 2.250000
+  OverflowVertical: Overflow
+  OverflowHorizontal: Overflow
+  Fill: !<TextFill>
+    Mode: Solid
+    Color: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+    Texture: !<reference> 00000000-0000-0000-0000-000000000000
+    ColorTint: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+    TileCount: 5.000000
+    TileZone: Rect
+    TextureStretch: FitWidth
+  BlendMode: PremultipliedAlpha
+  Outline: !<OutlineSettings>
+    Enabled: false
+    Fill: !<TextFill>
+      Mode: Solid
+      Color: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+      Texture: !<reference> 00000000-0000-0000-0000-000000000000
+      ColorTint: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+      TileCount: 5.000000
+      TileZone: Rect
+      TextureStretch: FitWidth
+    Size: 0.250000
+  Dropshadow: !<DropshadowSettings>
+    Enabled: false
+    Fill: !<TextFill>
+      Mode: Solid
+      Color: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+      Texture: !<reference> 00000000-0000-0000-0000-000000000000
+      ColorTint: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+      TileCount: 5.000000
+      TileZone: Rect
+      TextureStretch: FitWidth
+    OffsetX: 0.250000
+    OffsetY: 0.250000
+  Background: !<BackgroundSettings>
+    Enabled: false
+    Fill: !<TextFill>
+      Mode: Solid
+      Color: {x: 0.000000, y: 0.000000, z: 0.000000, w: 1.000000}
+      Texture: !<reference> 00000000-0000-0000-0000-000000000000
+      ColorTint: {x: 1.000000, y: 1.000000, z: 1.000000, w: 1.000000}
+      TileCount: 5.000000
+      TileZone: Rect
+      TextureStretch: FitWidth
+    Margins:
+      left: 0.000000
+      bottom: 0.000000
+      right: 0.000000
+      top: 0.000000
+    CornerRadius: 0.000000
+  AdvancedLayout: !<TextAdvancedLayout>
+    ExtentsTarget: !<reference> 00000000-0000-0000-0000-000000000000
+    LetterSpacing: 0.000000
+    LineSpacing: 1.000000
+    CapitalizationOverride: None
+  DepthTest: false
+  TwoSided: false
 - !<SceneObject/36d5330c-9e86-4ea8-9aba-bd8688187fd2>
   PrefabRemaps:
     []
@@ -1338,7 +1420,7 @@
   PrefabRemaps:
     []
   Name: ImageGen
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -1394,6 +1476,21 @@
     []
   Components:
     - !<own> 2732d388-98da-4ba1-85c9-359ecb72d9e7
+- !<SceneObject/3b7bb3bd-d1cd-43dc-8e43-6df61d439ab1>
+  PrefabRemaps:
+    []
+  Name: TriviaController
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 5ebb13ba-3bf0-49be-949c-94e1d70b5abd
 - !<ScriptComponent/3bbf27ea-a24a-4d9f-84a6-56b5830bb48e>
   PrefabRemaps:
     []
@@ -1513,15 +1610,15 @@
       pinchExponentTriggered: !<float> 2.000000
       pinchHighlightThresholdFar: !<float> 18.000000
       pinchHighlightThresholdNear: !<float> 4.000000
-      pokeBrightnessMax: 1.100000
+      pokeBrightnessMax: !<float> 1.000000
       pokeGlowBrightnessMax: 0.330000
-      pokeTriggeredMult: 1.500000
-      pokeHighlightThresholdFar: !<float> 18.000000
-      pokeHighlightThresholdNear: !<float> 4.000000
-      pokeOccludeThresholdFar: !<float> 12.000000
+      pokeTriggeredMult: 1.400000
+      pokeHighlightThresholdFar: !<float> 10.000000
+      pokeHighlightThresholdNear: !<float> 2.000000
+      pokeOccludeThresholdFar: !<float> 8.000000
       pokeOccludeThresholdNear: !<float> 0.000000
-      pokeExponent: 1.800000
-      pokeExponentTriggered: 1.200000
+      pokeExponent: !<float> 3.000000
+      pokeExponentTriggered: !<float> 1.000000
       handOccluderMaterial: !<reference.Material> bb8479b9-021e-4c42-809a-60edf99cbeac
       overrides:
         []
@@ -1532,7 +1629,7 @@
   PrefabRemaps:
     []
   Name: AISummarizer
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -1922,7 +2019,7 @@
   PrefabRemaps:
     []
   Name: OpenAIAssistant
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: -50.000000}
@@ -2158,7 +2255,7 @@
   PrefabRemaps:
     []
   Name: GeminiAssistant
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: -50.000000}
@@ -2872,6 +2969,25 @@
     - !<own> c2a3f250-ea25-4d54-a533-abe839f9bceb
   Components:
     []
+- !<ScriptComponent/5ebb13ba-3bf0-49be-949c-94e1d70b5abd>
+  PrefabRemaps:
+    []
+  Name: TriviaController
+  Enabled: true
+  ScriptAsset: !<reference> a47fd2db-5b88-403f-9bdf-ede0c9196981
+  ScriptInputsDefault:
+    silenceMs: true
+    enableDebugLogging: true
+  ScriptTypesDefault:
+    {}
+  ScriptInputs:
+    "":
+      questionText: !<reference.Text> 36bb5024-2dd5-4f81-8d8d-b0b0acf633c3
+      silenceMs: !<float> 2000.000000
+      enableDebugLogging: true
+  ScriptTypes:
+    "":
+      {}
 - !<SceneObject/5ee30f7a-3502-4fd2-84f8-20890f551677>
   PrefabRemaps:
     - 5ee30f7a-3502-4fd2-84f8-20890f551677: 538ee5bb-aa0f-4411-a7c9-0158e183889f
@@ -3102,6 +3218,21 @@
   BlendNormals: false
   BlendShapes:
     {}
+- !<SceneObject/6d299b70-5437-4829-a7aa-b46331793f5b>
+  PrefabRemaps:
+    []
+  Name: TriviaPanel
+  Enabled: true
+  Layers: 1
+  LocalTransform: !<TransformEntity>
+    Position: {x: 0.000000, y: 0.000000, z: -120.000000}
+    Rotation: {x: 0.000000, y: 0.000000, z: 0.000000}
+    Scale: {x: 1.000000, y: 1.000000, z: 1.000000}
+    HasSegmentScaleCompensation: false
+  Children:
+    []
+  Components:
+    - !<own> 36bb5024-2dd5-4f81-8d8d-b0b0acf633c3
 - !<BodyComponent/6d8128f1-cd6b-4bce-b53b-bac58d1b3ec9>
   PrefabRemaps:
     []
@@ -3159,7 +3290,7 @@
   PrefabRemaps:
     []
   Name: AgentOrchestrator
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -3258,7 +3389,7 @@
   PrefabRemaps:
     []
   Name: GenerationQueueInitializer
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -3981,6 +4112,7 @@
     HasSegmentScaleCompensation: false
   Children:
     - !<own> bced2f07-b559-4972-a7ab-7c82fb7d52a7
+    - !<own> 6d299b70-5437-4829-a7aa-b46331793f5b
   Components:
     []
 - !<SceneObject/8b1597e7-0f83-4295-a17b-d12cd299f954>
@@ -5202,15 +5334,15 @@
       pinchExponentTriggered: !<float> 2.000000
       pinchHighlightThresholdFar: !<float> 18.000000
       pinchHighlightThresholdNear: !<float> 4.000000
-      pokeBrightnessMax: 1.100000
+      pokeBrightnessMax: !<float> 1.000000
       pokeGlowBrightnessMax: 0.330000
-      pokeTriggeredMult: 1.500000
-      pokeHighlightThresholdFar: !<float> 18.000000
-      pokeHighlightThresholdNear: !<float> 4.000000
-      pokeOccludeThresholdFar: !<float> 12.000000
+      pokeTriggeredMult: 1.400000
+      pokeHighlightThresholdFar: !<float> 10.000000
+      pokeHighlightThresholdNear: !<float> 2.000000
+      pokeOccludeThresholdFar: !<float> 8.000000
       pokeOccludeThresholdNear: !<float> 0.000000
-      pokeExponent: 1.800000
-      pokeExponentTriggered: 1.200000
+      pokeExponent: !<float> 3.000000
+      pokeExponentTriggered: !<float> 1.000000
       handOccluderMaterial: !<reference.Material> 5d5c762b-f0dd-4c06-b76f-bcb8f8fb525f
       overrides:
         []
@@ -5280,7 +5412,7 @@
   PrefabRemaps:
     []
   Name: ManipulateParent
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: -22.000000, y: -20.000000, z: -90.000000}
@@ -5589,7 +5721,7 @@
   PrefabRemaps:
     []
   Name: StorageManager
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -5792,7 +5924,7 @@
   PrefabRemaps:
     []
   Name: TextInstructions_DISABLE AFTER READING
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 28.456787, z: -90.000000}
@@ -6856,7 +6988,7 @@
   PrefabRemaps:
     []
   Name: InternetAvailabilityPopUp
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 0.000000, y: 0.000000, z: 0.000000}
@@ -6871,7 +7003,7 @@
   PrefabRemaps:
     []
   Name: ManipulateParent
-  Enabled: true
+  Enabled: false
   Layers: 1
   LocalTransform: !<TransformEntity>
     Position: {x: 22.000000, y: -20.000000, z: -90.000000}

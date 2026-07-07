@@ -26,7 +26,6 @@
   ExportUid: 00000000-0000-0000-0000-000000000000
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
-    deckJson: false
     enableDebugLogging: false
     questionText: false
     silenceMs: false
@@ -40,7 +39,6 @@
     []
   DefaultScriptInputs:
     - questionText: !<reference.Text> 00000000-0000-0000-0000-000000000000
-      deckJson: !<reference.Asset> 00000000-0000-0000-0000-000000000000
       silenceMs: !<float> 2000.000000
       enableDebugLogging: true
   ScriptTypes:
@@ -48,6 +46,5 @@
       {}
   InputLines:
     - '// @input Component.Text questionText {"hint":"Text component that displays the current question"}'
-    - '// @input Asset.Asset deckJson {"hint":"deck.json imported as a JsonAsset. If unset or unreadable, a built-in deck is used."}'
     - '// @input float silenceMs = 2000 {"hint":"Silence (ms) before a spoken answer is finalized"}'
     - '// @input bool enableDebugLogging = true {"hint":"Enable debug logging"}'
