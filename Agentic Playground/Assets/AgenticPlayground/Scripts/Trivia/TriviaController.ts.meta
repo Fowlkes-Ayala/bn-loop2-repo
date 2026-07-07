@@ -1,0 +1,53 @@
+- !<AssetImportMetadata/618f3e2f-bb71-4a1a-b293-484469a6cf55>
+  ImportedAssetIds:
+    TypeScriptAsset: !<reference> a47fd2db-5b88-403f-9bdf-ede0c9196981
+  ImporterName: TypeScriptAssetImporter
+  PrimaryAsset: !<reference> a47fd2db-5b88-403f-9bdf-ede0c9196981
+  PackageType: NotAPackage
+  LegacyPackagePolicy: ~
+  ExtraData:
+    {}
+  AssetDataMap:
+    TypeScriptAsset: !<own> d7733a36-7c95-4bf9-94ba-143d3bcb9333
+  DependentFiles:
+    []
+  ImporterSettings: !<AssetImporterSettings>
+    {}
+  CompressionSettings: !<own> 00000000-0000-0000-0000-000000000000
+- !<TypeScriptAssetData/d7733a36-7c95-4bf9-94ba-143d3bcb9333>
+  SvgIcon: ""
+  SetupScript:
+    code: ""
+  Description: ""
+  VersionMajor: 0
+  VersionMinor: 0
+  VersionPatch: 0
+  ComponentUid: ada1cd7e-3e82-4224-a25b-97347e8b79ee
+  ExportUid: 00000000-0000-0000-0000-000000000000
+  PackagePolicy: CanBeUnpacked
+  ScriptInputsHidden:
+    deckJson: false
+    enableDebugLogging: false
+    questionText: false
+    silenceMs: false
+  ScriptTypesHidden:
+    {}
+  ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
+  DeclarationFile: !<reference> 00000000-0000-0000-0000-000000000000
+  Tags:
+    []
+  Attachments:
+    []
+  DefaultScriptInputs:
+    - questionText: !<reference.Text> 00000000-0000-0000-0000-000000000000
+      deckJson: !<reference.Asset> 00000000-0000-0000-0000-000000000000
+      silenceMs: !<float> 2000.000000
+      enableDebugLogging: true
+  ScriptTypes:
+    -
+      {}
+  InputLines:
+    - '// @input Component.Text questionText {"hint":"Text component that displays the current question"}'
+    - '// @input Asset.Asset deckJson {"hint":"deck.json imported as a JsonAsset. If unset or unreadable, a built-in deck is used."}'
+    - '// @input float silenceMs = 2000 {"hint":"Silence (ms) before a spoken answer is finalized"}'
+    - '// @input bool enableDebugLogging = true {"hint":"Enable debug logging"}'
