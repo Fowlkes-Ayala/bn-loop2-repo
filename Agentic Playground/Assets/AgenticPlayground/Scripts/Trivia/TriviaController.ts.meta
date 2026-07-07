@@ -26,9 +26,13 @@
   ExportUid: 00000000-0000-0000-0000-000000000000
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
+    answerTimeoutMs: false
     audioComponent: false
+    buzzSfx: false
+    correctSfx: false
     enableDebugLogging: false
     questionText: false
+    sfxComponent: false
     silenceMs: false
     voiceName: false
   ScriptTypesHidden:
@@ -42,8 +46,12 @@
   DefaultScriptInputs:
     - questionText: !<reference.Text> 00000000-0000-0000-0000-000000000000
       audioComponent: !<reference.AudioComponent> 00000000-0000-0000-0000-000000000000
+      sfxComponent: !<reference.AudioComponent> 00000000-0000-0000-0000-000000000000
+      correctSfx: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      buzzSfx: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
       voiceName: Sasha
       silenceMs: !<float> 2000.000000
+      answerTimeoutMs: !<float> 5000.000000
       enableDebugLogging: true
   ScriptTypes:
     -
@@ -51,6 +59,10 @@
   InputLines:
     - '// @input Component.Text questionText {"hint":"On-screen Text used as a demo/debug aid (mirrors whatever is spoken)"}'
     - '// @input Component.AudioComponent audioComponent {"hint":"AudioComponent that plays the synthesized TTS audio"}'
+    - '// @input Component.AudioComponent sfxComponent {"hint":"AudioComponent used to play the correct-answer chime (kept separate from the TTS audioComponent)"}'
+    - '// @input Asset.AudioTrackAsset correctSfx {"hint":"Short chime played when a correct answer is detected"}'
+    - '// @input Asset.AudioTrackAsset buzzSfx {"hint":"Buzz played when no correct answer is heard within answerTimeoutMs"}'
     - '// @input string voiceName = "Sasha" {"hint":"TTS voice name (built-in). Supported: Sasha"}'
     - '// @input float silenceMs = 1500 {"hint":"Silence (ms) before a spoken command is finalized"}'
+    - '// @input float answerTimeoutMs = 5000 {"hint":"Time (ms) to hear the correct answer before it counts as a miss and moves on"}'
     - '// @input bool enableDebugLogging = true {"hint":"Enable debug logging"}'

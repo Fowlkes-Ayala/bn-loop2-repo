@@ -37,12 +37,28 @@ export class TriviaController extends BaseScriptComponent {
   private audioComponent: AudioComponent
 
   @input
+  @hint("AudioComponent used to play the correct-answer chime (kept separate from the TTS audioComponent)")
+  private sfxComponent: AudioComponent
+
+  @input
+  @hint("Short chime played when a correct answer is detected")
+  private correctSfx: AudioTrackAsset
+
+  @input
+  @hint("Buzz played when no correct answer is heard within answerTimeoutMs")
+  private buzzSfx: AudioTrackAsset
+
+  @input
   @hint("TTS voice name (built-in). Supported: Sasha")
   private voiceName: string = "Sasha"
 
   @input
   @hint("Silence (ms) before a spoken command is finalized")
   private silenceMs: number = 1500
+
+  @input
+  @hint("Time (ms) to hear the correct answer before it counts as a miss and moves on")
+  private answerTimeoutMs: number = 5000
 
   @input
   @hint("Enable debug logging")
@@ -64,6 +80,12 @@ export class TriviaController extends BaseScriptComponent {
   private isSpeaking: boolean = false
 
   private restartEvent: DelayedCallbackEvent
+  private answerTimeoutEvent: DelayedCallbackEvent
+
+  // Bumped whenever a listen cycle is abandoned out from under a pending
+  // transcription (i.e. the answer timeout fires) so a late ASR result for
+  // the old card can't be mistakenly applied to the new one.
+  private listenGeneration: number = 0
 
   // Command synonym sets, matched against normalized speech. "got it" is
   // intentionally NOT a command — a correct answer is detected automatically.
@@ -75,6 +97,12 @@ export class TriviaController extends BaseScriptComponent {
     // Reusable delayed callback used to re-arm the mic between utterances.
     this.restartEvent = this.createEvent("DelayedCallbackEvent")
     this.restartEvent.bind(() => this.listen())
+
+    // Per-card countdown: fires if no correct answer is heard in time.
+    this.answerTimeoutEvent = this.createEvent("DelayedCallbackEvent")
+    this.answerTimeoutEvent.bind(() => this.onAnswerTimeout())
+    this.answerTimeoutEvent.enabled = false
+
     this.createEvent("OnStartEvent").bind(() => this.initialize())
   }
 
@@ -103,9 +131,17 @@ export class TriviaController extends BaseScriptComponent {
 
   private listen(): void {
     if (this.sessionEnded || this.isSpeaking) return
+    const generation = this.listenGeneration
     this.startTranscribing()
-      .then((text) => this.handleTranscript(text))
-      .catch(() => this.scheduleListen(0.3))
+      .then((text) => {
+        // Stale if the answer timeout already moved us off this card.
+        if (generation !== this.listenGeneration) return
+        this.handleTranscript(text)
+      })
+      .catch(() => {
+        if (generation !== this.listenGeneration) return
+        this.scheduleListen(0.3)
+      })
   }
 
   private scheduleListen(delaySeconds: number): void {
@@ -129,6 +165,7 @@ export class TriviaController extends BaseScriptComponent {
     // "end" first — it may interrupt at any (listening) moment.
     if (this.matches(heard, TriviaController.END)) {
       this.log("Command: end")
+      this.disarmAnswerTimeout()
       this.endSession()
       return true
     }
@@ -138,12 +175,14 @@ export class TriviaController extends BaseScriptComponent {
         return false
       }
       this.log("Command: flip")
+      this.disarmAnswerTimeout()
       this.backSpoken = true
       this.speak(this.currentCard().back)
       return true
     }
     if (this.matches(heard, TriviaController.AGAIN)) {
       this.log("Command: again")
+      this.disarmAnswerTimeout()
       this.queue.push(this.currentCardId) // re-queue at the end
       this.reviewedCount += 1
       return this.advanceCard()
@@ -155,9 +194,11 @@ export class TriviaController extends BaseScriptComponent {
     const answer = this.normalize(this.currentCard().back)
     if (answer.length > 0 && heard.indexOf(answer) !== -1) {
       this.log(`Correct answer heard: "${text}"`)
+      this.disarmAnswerTimeout()
       this.reviewedCount += 1
       if (!this.backSpoken) this.knownCount += 1
-      return this.advanceCard()
+      this.playSfx(this.correctSfx, () => this.advanceCard())
+      return true
     }
 
     this.log(`No match, staying on card: "${text}"`)
@@ -182,6 +223,32 @@ export class TriviaController extends BaseScriptComponent {
     // Spec Section 6 wording (avoids command trigger words).
     const summary = `Session complete. You reviewed ${this.reviewedCount} cards and got ${this.knownCount} right.`
     this.speak(summary)
+  }
+
+  // ---------- Answer timeout ----------
+
+  private armAnswerTimeout(): void {
+    this.answerTimeoutEvent.enabled = true
+    this.answerTimeoutEvent.reset(this.answerTimeoutMs / 1000)
+  }
+
+  private disarmAnswerTimeout(): void {
+    this.answerTimeoutEvent.enabled = false
+  }
+
+  /** No correct answer heard in time: buzz, re-queue the card like "again", and move on. */
+  private onAnswerTimeout(): void {
+    if (this.sessionEnded) return
+    this.log("Answer timeout, no correct answer heard")
+    this.listenGeneration++ // invalidate any pending transcription for this card
+    try {
+      this.asrModule.stopTranscribing()
+    } catch (e) {
+      // nothing was transcribing
+    }
+    this.queue.push(this.currentCardId) // re-queue at the end, like "again"
+    this.reviewedCount += 1
+    this.playSfx(this.buzzSfx, () => this.advanceCard())
   }
 
   // ---------- Speaking (on-device TTS) with mic-mute guard ----------
@@ -223,12 +290,24 @@ export class TriviaController extends BaseScriptComponent {
     )
   }
 
+  /** Play a short SFX on the dedicated sfxComponent, then invoke onDone once it finishes. */
+  private playSfx(track: AudioTrackAsset, onDone: () => void): void {
+    if (!this.sfxComponent || !track) {
+      onDone()
+      return
+    }
+    this.sfxComponent.audioTrack = track
+    this.sfxComponent.setOnFinish(() => onDone())
+    this.sfxComponent.play(1)
+  }
+
   private onSpeakDone(): void {
     this.isSpeaking = false
     if (this.sessionEnded) {
       this.log("Session ended.")
       return
     }
+    this.armAnswerTimeout()
     this.scheduleListen(0.2)
   }
 
@@ -306,20 +385,20 @@ const DECK_JSON = `{
   "deck_id": "demo-deck-01",
   "deck_name": "SnapStudy Demo Deck",
   "cards": [
-    { "id": "c01", "front": "What is the capital of Japan?", "back": "Tokyo" },
-    { "id": "c02", "front": "How many legs does a spider have?", "back": "Eight" },
-    { "id": "c03", "front": "What planet is known as the Red Planet?", "back": "Mars" },
-    { "id": "c04", "front": "What is the chemical symbol for gold?", "back": "Au" },
-    { "id": "c05", "front": "How many continents are there on Earth?", "back": "Seven" },
-    { "id": "c06", "front": "What is the largest ocean on Earth?", "back": "The Pacific Ocean" },
-    { "id": "c07", "front": "In what year did the Titanic sink?", "back": "Nineteen twelve" },
-    { "id": "c08", "front": "What is the freezing point of water in Celsius?", "back": "Zero degrees" },
-    { "id": "c09", "front": "Who wrote the play Romeo and Juliet?", "back": "William Shakespeare" },
-    { "id": "c10", "front": "What is the tallest mountain in the world?", "back": "Mount Everest" },
-    { "id": "c11", "front": "How many sides does a hexagon have?", "back": "Six" },
-    { "id": "c12", "front": "What gas do plants absorb from the air for photosynthesis?", "back": "Carbon dioxide" },
-    { "id": "c13", "front": "What is the smallest prime number?", "back": "Two" },
-    { "id": "c14", "front": "What currency is used in the United Kingdom?", "back": "The pound" },
-    { "id": "c15", "front": "How many bones are in the adult human body?", "back": "Two hundred six" }
+    { "id": "c01", "front": "What's the term for two notes that sound the same pitch but are named differently?", "back": "Enharmonic" },
+    { "id": "c02", "front": "What's the relative minor of C Major?", "back": "A Minor" },
+    { "id": "c03", "front": "What's the seventh mode of the major scale?", "back": "Locrian" },
+    { "id": "c04", "front": "What's it called when a Five chord resolves to a Four chord instead of the One?", "back": "Deceptive cadence" },
+    { "id": "c05", "front": "What's the term for playing or writing notes outside of the key's scale?", "back": "Chromaticism" },
+    { "id": "c06", "front": "What do you call a chord that isn't diatonic to the key but still resolves normally?", "back": "Secondary dominant" },
+    { "id": "c07", "front": "What do you call a chord voicing where notes aren't in their usual root-positioned order?", "back": "Inversion" },
+    { "id": "c08", "front": "What's the rhythmic figure that emphasizes the off-beat?", "back": "Syncopation" },
+    { "id": "c09", "front": "What do you call a chord with a minor third and diminished fifth?", "back": "Diminished chord" },
+    { "id": "c10", "front": "What's the term for playing notes short and detached?", "back": "Staccato" },
+    { "id": "c11", "front": "What's the term for chords that naturally belong to a given key?", "back": "Diatonic chords" },
+    { "id": "c12", "front": "What's the first mode of the major scale?", "back": "Ionian" },
+    { "id": "c13", "front": "What do you call a chord progression repeated as the basis for a whole song section", "back": "Vamp" },
+    { "id": "c14", "front": "What's the term for a chord that contains a tritone and creates strong pull to resolve?", "back": "Dominant seventh" },
+    { "id": "c15", "front": "What's the name of a chord made with just the One and the Five notes", "back": "Power chord" }
   ]
 }`

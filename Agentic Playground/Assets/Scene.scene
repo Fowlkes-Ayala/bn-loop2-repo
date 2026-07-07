@@ -1260,6 +1260,23 @@
     - !<own> 30758cf2-9a47-41be-8c29-cd314eec035f
   Components:
     []
+- !<AudioComponent/33c67f96-e323-49ee-a4f4-9c494fcf1dec>
+  PrefabRemaps:
+    []
+  Name: Audio
+  Enabled: true
+  AudioTrack: !<reference> 00000000-0000-0000-0000-000000000000
+  EnableAutoplayLoop: false
+  Volume: 1.000000
+  EnableMixToSnap: false
+  RecordVolume: 1.000000
+  EnableSpatialAudio: false
+  EnableDistanceEffect: false
+  CurveType: Logarithm
+  MinDistance: 0.000000
+  MaxDistance: 100.000000
+  EnableDirectivityEffect: false
+  EnablePositionEffect: false
 - !<ScriptComponent/33f8597e-1987-4ead-9d57-184180a88f6c>
   PrefabRemaps:
     []
@@ -1492,6 +1509,7 @@
   Components:
     - !<own> 5ebb13ba-3bf0-49be-949c-94e1d70b5abd
     - !<own> 77767d69-a290-485f-8fd5-8b7ce36ec689
+    - !<own> 33c67f96-e323-49ee-a4f4-9c494fcf1dec
 - !<ScriptComponent/3bbf27ea-a24a-4d9f-84a6-56b5830bb48e>
   PrefabRemaps:
     []
@@ -2979,6 +2997,7 @@
   ScriptInputsDefault:
     voiceName: true
     silenceMs: true
+    answerTimeoutMs: true
     enableDebugLogging: true
   ScriptTypesDefault:
     {}
@@ -2986,8 +3005,12 @@
     "":
       questionText: !<reference.Text> 36bb5024-2dd5-4f81-8d8d-b0b0acf633c3
       audioComponent: !<reference.AudioComponent> 77767d69-a290-485f-8fd5-8b7ce36ec689
+      sfxComponent: !<reference.AudioComponent> 33c67f96-e323-49ee-a4f4-9c494fcf1dec
+      correctSfx: !<reference.AudioTrackAsset> c78e297c-7692-4cb2-b1d3-18126d436bf7
+      buzzSfx: !<reference.AudioTrackAsset> 27cc5d34-4355-4de1-b6c8-e36674e80e95
       voiceName: Sasha
       silenceMs: !<float> 2000.000000
+      answerTimeoutMs: !<float> 5000.000000
       enableDebugLogging: true
   ScriptTypes:
     "":
