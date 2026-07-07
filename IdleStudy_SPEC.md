@@ -94,7 +94,7 @@ A single Lens, entirely voice-in/voice-out with **no visual interface whatsoever
 
 - **No visual UI of any kind** — no text panels, no UI Kit elements, no on-screen content. Everything is spoken.
 - No gesture/pinch/tap fallback input — voice only, in and out.
-- No "start", "next", "back", or "repeat" commands.
+- No "start", "next", or "back" commands. ("repeat" is now IN scope — see Section 4. It was added after live-lens testing revealed that, with no visual fallback, a user who misses the spoken prompt has no way to hear it again.)
 - No deck switching, deck authoring, or deck editing UI.
 - No persistence across sessions (no save/resume).
 - No accounts, no login, no user identity.
@@ -117,8 +117,10 @@ If you find yourself building any of the above, stop — it's out of scope for t
 | "got it" / "correct" / "know it" | Card back has been spoken | Mark card known, speak the front of the next card (or the summary if deck exhausted) |
 | "again" / "review" / "not yet" | Card back has been spoken | Re-queue card at end of session queue, speak the front of the next card |
 | "end" / "I'm done" / "stop" | Any time | Immediately speak the summary and end the session |
+| "repeat" / "one more time" / "repeat that" | Any time | Re-speak the current card — the front, or the back if it has already been revealed. Does not advance the deck or change any counts. |
 
 Notes for implementation:
+- **"repeat" rationale + collision warning:** repeat exists because the voice-only product has no visual fallback — if the user misses the spoken prompt, this is the only way to re-hear it. Keep its keyword set DISJOINT from "again" (re-queue): do NOT use synonyms containing the word "again" (e.g. "say it again"), since command matching is substring-based and the two commands would collide.
 - No wake word — VoiceML listens continuously for the session, **except while TTS audio is playing** (see Section 6's mic-muting requirement — this is not optional, see the self-triggering risk in Section 10).
 - "got it" and "again" should only be actionable after the card back has been spoken. If spoken before that, ignore (no-op) rather than erroring.
 - Use Lens Studio's VoiceML Module with Speech Context boosting on these exact keyword sets. Start boost value at 5 per Snap's guidance and adjust only if a specific command is consistently misclassified during testing.

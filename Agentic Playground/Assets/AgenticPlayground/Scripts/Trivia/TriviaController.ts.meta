@@ -26,9 +26,11 @@
   ExportUid: 00000000-0000-0000-0000-000000000000
   PackagePolicy: CanBeUnpacked
   ScriptInputsHidden:
+    audioComponent: false
     enableDebugLogging: false
     questionText: false
     silenceMs: false
+    voiceName: false
   ScriptTypesHidden:
     {}
   ReadMe: !<reference> 00000000-0000-0000-0000-000000000000
@@ -39,12 +41,16 @@
     []
   DefaultScriptInputs:
     - questionText: !<reference.Text> 00000000-0000-0000-0000-000000000000
+      audioComponent: !<reference.AudioComponent> 00000000-0000-0000-0000-000000000000
+      voiceName: Sasha
       silenceMs: !<float> 2000.000000
       enableDebugLogging: true
   ScriptTypes:
     -
       {}
   InputLines:
-    - '// @input Component.Text questionText {"hint":"Text component that displays the current question"}'
-    - '// @input float silenceMs = 2000 {"hint":"Silence (ms) before a spoken answer is finalized"}'
+    - '// @input Component.Text questionText {"hint":"On-screen Text used as a demo/debug aid (mirrors whatever is spoken)"}'
+    - '// @input Component.AudioComponent audioComponent {"hint":"AudioComponent that plays the synthesized TTS audio"}'
+    - '// @input string voiceName = "Sasha" {"hint":"TTS voice name (built-in). Supported: Sasha"}'
+    - '// @input float silenceMs = 1500 {"hint":"Silence (ms) before a spoken command is finalized"}'
     - '// @input bool enableDebugLogging = true {"hint":"Enable debug logging"}'

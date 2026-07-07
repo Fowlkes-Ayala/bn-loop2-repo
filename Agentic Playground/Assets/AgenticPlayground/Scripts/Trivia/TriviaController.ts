@@ -65,9 +65,9 @@ export class TriviaController extends BaseScriptComponent {
 
   private restartEvent: DelayedCallbackEvent
 
-  // Command synonym sets (spec Section 4), matched against normalized speech.
+  // Command synonym sets, matched against normalized speech. "got it" is
+  // intentionally NOT a command — a correct answer is detected automatically.
   private static FLIP = ["flip", "show answer", "reveal"]
-  private static GOT_IT = ["got it", "correct", "know it"]
   private static AGAIN = ["again", "review", "not yet"]
   private static END = ["end", "im done", "i am done", "done", "stop"]
 
@@ -119,11 +119,14 @@ export class TriviaController extends BaseScriptComponent {
     if (!startedSpeaking) this.scheduleListen(0.3)
   }
 
-  /** Interpret a spoken utterance as a command. Returns true iff it started speech. */
+  /**
+   * Interpret a spoken utterance: commands first, then automatic answer-detection.
+   * Returns true iff it started speech (which owns resuming the mic).
+   */
   private runCommand(text: string): boolean {
     const heard = this.normalize(text)
 
-    // "end" first — it is allowed to interrupt at any (listening) moment.
+    // "end" first — it may interrupt at any (listening) moment.
     if (this.matches(heard, TriviaController.END)) {
       this.log("Command: end")
       this.endSession()
@@ -139,28 +142,25 @@ export class TriviaController extends BaseScriptComponent {
       this.speak(this.currentCard().back)
       return true
     }
-    if (this.matches(heard, TriviaController.GOT_IT)) {
-      if (!this.backSpoken) {
-        this.log('Ignored "got it" (answer not given yet)')
-        return false
-      }
-      this.log("Command: got it")
-      this.knownCount += 1
-      this.reviewedCount += 1
-      return this.advanceCard()
-    }
     if (this.matches(heard, TriviaController.AGAIN)) {
-      if (!this.backSpoken) {
-        this.log('Ignored "again" (answer not given yet)')
-        return false
-      }
       this.log("Command: again")
       this.queue.push(this.currentCardId) // re-queue at the end
       this.reviewedCount += 1
       return this.advanceCard()
     }
 
-    this.log(`Unrecognized: "${text}"`)
+    // Automatic answer-detection (replaces an explicit "got it"): if the spoken
+    // phrase contains the card's answer, it's correct — advance. Counts as
+    // "known" only if answered before revealing the back via "flip".
+    const answer = this.normalize(this.currentCard().back)
+    if (answer.length > 0 && heard.indexOf(answer) !== -1) {
+      this.log(`Correct answer heard: "${text}"`)
+      this.reviewedCount += 1
+      if (!this.backSpoken) this.knownCount += 1
+      return this.advanceCard()
+    }
+
+    this.log(`No match, staying on card: "${text}"`)
     return false
   }
 
