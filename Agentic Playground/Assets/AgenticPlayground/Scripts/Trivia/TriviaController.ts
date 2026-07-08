@@ -245,7 +245,13 @@ export class TriviaController extends BaseScriptComponent {
     this.answerTimeoutEvent.enabled = false
   }
 
-  /** No correct answer heard in time: buzz, re-queue the card like "again", and move on. */
+  /**
+   * No correct answer heard in time: buzz, then speak the correct answer aloud
+   * (so the user still learns it), THEN re-queue the card and move on. The
+   * mic stays muted (isSpeaking) and the per-card answer timer stays disarmed
+   * for the whole buzz+reveal sequence — it only resumes once advanceCard()
+   * starts listening for the next card.
+   */
   private onAnswerTimeout(): void {
     if (this.sessionEnded) return
     this.log("Answer timeout, no correct answer heard")
@@ -257,12 +263,23 @@ export class TriviaController extends BaseScriptComponent {
     }
     this.queue.push(this.currentCardId) // re-queue at the end, like "again"
     this.reviewedCount += 1
-    this.playSfx(this.buzzSfx, () => this.advanceCard())
+    const answer = this.currentCard().back
+    this.playSfx(this.buzzSfx, () => {
+      // Spec: avoid command trigger words ("correct", etc.) in app-generated speech.
+      this.speak(`The answer was ${answer}.`, () => this.advanceCard())
+    })
   }
 
   // ---------- Speaking (on-device TTS) with mic-mute guard ----------
 
-  private speak(text: string): void {
+  /**
+   * Synthesize + play `text`. By default, completion resumes the normal
+   * listen/answer-timeout cycle (onSpeakDone). Pass onComplete to instead
+   * chain into a specific next step (e.g. the missed-answer reveal chaining
+   * into advanceCard()) — the mic stays muted for the whole chain since
+   * isSpeaking only clears once the chain's final step re-arms listening.
+   */
+  private speak(text: string, onComplete?: () => void): void {
     this.isSpeaking = true
     this.setText(text) // mirror on the demo panel
     this.log(`Speaking: "${text}"`)
@@ -285,22 +302,31 @@ export class TriviaController extends BaseScriptComponent {
       (audioTrackAsset: AudioTrackAsset) => {
         if (!this.audioComponent) {
           this.log("No AudioComponent wired — cannot play TTS audio")
-          this.onSpeakDone()
+          this.finishSpeaking(onComplete)
           return
         }
         this.log("TTS synthesized OK; starting audio playback")
         this.audioComponent.audioTrack = audioTrackAsset
         this.audioComponent.setOnFinish(() => {
           this.log("TTS audio playback finished")
-          this.onSpeakDone()
+          this.finishSpeaking(onComplete)
         })
         this.audioComponent.play(1)
       },
       (error: number, description: string) => {
         print(`TriviaController: TTS error ${error}: ${description}`)
-        this.onSpeakDone() // never get stuck muted
+        this.finishSpeaking(onComplete) // never get stuck muted
       }
     )
+  }
+
+  private finishSpeaking(onComplete?: () => void): void {
+    this.isSpeaking = false
+    if (onComplete) {
+      onComplete()
+      return
+    }
+    this.onSpeakDone()
   }
 
   /** Play a short SFX on the dedicated sfxComponent, then invoke onDone once it finishes. */
@@ -315,7 +341,7 @@ export class TriviaController extends BaseScriptComponent {
   }
 
   private onSpeakDone(): void {
-    this.isSpeaking = false
+    // isSpeaking already cleared by finishSpeaking() before this runs.
     if (this.sessionEnded) {
       this.log("Session ended.")
       return

@@ -61,3 +61,13 @@ Development story capture for the SnapStudy build (per IdleStudy_SPEC.md, Sectio
 - *No audio on device:* built-in TextToSpeechModule either hits its error path on-device (look for "TTS error ...") or completes but the AudioComponent output isn't audible on Spectacles (routing/spatial-audio config). If TTS/ASR quietly depend on connectivity, poor device Wi-Fi would hit both at once.
 - *Always "answer timeout":* downstream — with no audible question the user can't answer in time, and the 5s window (which includes ASR's 1.5s silence-termination + device latency) is very tight even when they do speak; ASR may also fail to re-acquire the mic right after audio playback on-device.
 **Baseline for bisecting:** `cc3318c` = broken on device. `129a7d0` (text-only MVP, no TTS) = last state confirmed working on device.
+
+---
+
+## [Phase 6 resolved] — Full voice-in/voice-out flashcards working on Spectacles ✅
+**Timestamp:** Session 2 (2026-07-08), same day as the regression above
+**What was built:** Root cause of the on-device breakage: the `sfxComponent` input on `TriviaController` had gone unwired (`null`) even though its `AudioComponent` and the `correctSfx`/`buzzSfx` assets still existed in the scene — a hard runtime error (`Input sfxComponent was not provided`) that killed the script before TTS/ASR ever got a chance to run, which is why every symptom (silence, no text, permanent "answer timeout") appeared at once. Re-wired `sfxComponent` to its `AudioComponent`, verified via compile + Preview, and had the user redeploy to the Spectacles.
+**User's account:** "Phenomenal, it worked."
+**Friction/struggle:** The bug hid behind three misleading symptoms (audio/text/timeout) that all looked like separate on-device platform issues, when the real cause was one silently-broken script input that never surfaced in Preview (Preview must not enforce the same required-input check, or the reference happened to survive there). A good lesson: an unhandled script exception can look exactly like a hardware/networking problem from the outside.
+**Win/highlight:** The full spoken flashcard loop — question spoken, answer spoken back, correct/incorrect feedback, next card — now runs end-to-end on real Spectacles hardware. This is the spec's finished product, working.
+**Suggested capture:** The payoff clip for the whole build: launch on the Spectacles, speak an answer, hear the chime and the next question, no screen needed. Good candidate for the video's final demo beat.
