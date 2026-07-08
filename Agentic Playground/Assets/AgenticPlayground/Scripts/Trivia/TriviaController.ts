@@ -132,14 +132,23 @@ export class TriviaController extends BaseScriptComponent {
   private listen(): void {
     if (this.sessionEnded || this.isSpeaking) return
     const generation = this.listenGeneration
-    this.startTranscribing()
+    // (Re)start the per-card response window as listening actually begins.
+    this.armAnswerTimeout()
+    this.log("ASR: start listening")
+    this.startTranscribing(() => {
+      // Partial speech detected — the user is answering; extend the window so a
+      // slow-to-finalize answer isn't cut off by the timeout.
+      if (generation !== this.listenGeneration) return
+      this.armAnswerTimeout()
+    })
       .then((text) => {
         // Stale if the answer timeout already moved us off this card.
         if (generation !== this.listenGeneration) return
         this.handleTranscript(text)
       })
-      .catch(() => {
+      .catch((reason) => {
         if (generation !== this.listenGeneration) return
+        this.log(`ASR: no result (${reason})`)
         this.scheduleListen(0.3)
       })
   }
@@ -279,8 +288,12 @@ export class TriviaController extends BaseScriptComponent {
           this.onSpeakDone()
           return
         }
+        this.log("TTS synthesized OK; starting audio playback")
         this.audioComponent.audioTrack = audioTrackAsset
-        this.audioComponent.setOnFinish(() => this.onSpeakDone())
+        this.audioComponent.setOnFinish(() => {
+          this.log("TTS audio playback finished")
+          this.onSpeakDone()
+        })
         this.audioComponent.play(1)
       },
       (error: number, description: string) => {
@@ -307,8 +320,11 @@ export class TriviaController extends BaseScriptComponent {
       this.log("Session ended.")
       return
     }
-    this.armAnswerTimeout()
-    this.scheduleListen(0.2)
+    // Slightly longer settle before re-arming the mic — on-device the audio
+    // subsystem needs a beat to hand off from playback to capture. The answer
+    // window is (re)armed inside listen(), not here.
+    this.log("Speak finished; scheduling listen")
+    this.scheduleListen(0.5)
   }
 
   // ---------- Helpers ----------
@@ -341,8 +357,11 @@ export class TriviaController extends BaseScriptComponent {
     }
   }
 
-  /** Single-shot transcription that resolves with the final recognized string. */
-  private startTranscribing(): Promise<string> {
+  /**
+   * Single-shot transcription that resolves with the final recognized string.
+   * onPartial fires on each non-final (in-progress) recognition update.
+   */
+  private startTranscribing(onPartial?: () => void): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       try {
         this.asrModule.stopTranscribing()
@@ -355,10 +374,20 @@ export class TriviaController extends BaseScriptComponent {
       options.silenceUntilTerminationMs = this.silenceMs
 
       let settled = false
+      let partialLogged = false
       options.onTranscriptionUpdateEvent.add((asrOutput) => {
-        if (!asrOutput.isFinal || settled) return
+        if (settled) return
+        if (!asrOutput.isFinal) {
+          if (!partialLogged) {
+            this.log(`ASR partial: "${asrOutput.text}"`)
+            partialLogged = true
+          }
+          if (onPartial) onPartial()
+          return
+        }
         settled = true
         const t = asrOutput.text.trim()
+        this.log(`ASR final: "${t}"`)
         if (t.length > 0) {
           resolve(t)
         } else {
@@ -368,6 +397,7 @@ export class TriviaController extends BaseScriptComponent {
       options.onTranscriptionErrorEvent.add((errorCode) => {
         if (settled) return
         settled = true
+        this.log(`ASR error code: ${errorCode}`)
         reject(`asr error ${errorCode}`)
       })
 

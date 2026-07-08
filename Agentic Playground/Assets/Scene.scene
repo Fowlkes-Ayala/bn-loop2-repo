@@ -2995,6 +2995,9 @@
   Enabled: true
   ScriptAsset: !<reference> a47fd2db-5b88-403f-9bdf-ede0c9196981
   ScriptInputsDefault:
+    sfxComponent: true
+    correctSfx: true
+    buzzSfx: true
     voiceName: true
     silenceMs: true
     answerTimeoutMs: true
@@ -3005,9 +3008,9 @@
     "":
       questionText: !<reference.Text> 36bb5024-2dd5-4f81-8d8d-b0b0acf633c3
       audioComponent: !<reference.AudioComponent> 77767d69-a290-485f-8fd5-8b7ce36ec689
-      sfxComponent: !<reference.AudioComponent> 33c67f96-e323-49ee-a4f4-9c494fcf1dec
-      correctSfx: !<reference.AudioTrackAsset> c78e297c-7692-4cb2-b1d3-18126d436bf7
-      buzzSfx: !<reference.AudioTrackAsset> 27cc5d34-4355-4de1-b6c8-e36674e80e95
+      sfxComponent: !<reference.AudioComponent> 00000000-0000-0000-0000-000000000000
+      correctSfx: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
+      buzzSfx: !<reference.AudioTrackAsset> 00000000-0000-0000-0000-000000000000
       voiceName: Sasha
       silenceMs: !<float> 2000.000000
       answerTimeoutMs: !<float> 5000.000000

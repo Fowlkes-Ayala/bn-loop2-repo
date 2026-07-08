@@ -1,8 +1,8 @@
-- !<AssetImportMetadata/40d7f7a3-11a1-bde6-78a4-f8e649e7c3cc>
+- !<AssetImportMetadata/27b11699-e1a2-4765-bfc1-9d01773a6cdd>
   ImportedAssetIds:
-    AnimationMixerLayer: !<reference> d731b49c-a632-4792-acb4-26015d7209bf
-  ImporterName: AnimationMixerLayerImporter
-  PrimaryAsset: !<reference> d731b49c-a632-4792-acb4-26015d7209bf
+    FileAudioTrack: !<reference> af981b00-bb95-48b1-a341-04ab1abe42cc
+  ImporterName: FileAudioTrackImporter
+  PrimaryAsset: !<reference> af981b00-bb95-48b1-a341-04ab1abe42cc
   PackageType: NotAPackage
   LegacyPackagePolicy: ~
   ExtraData:
