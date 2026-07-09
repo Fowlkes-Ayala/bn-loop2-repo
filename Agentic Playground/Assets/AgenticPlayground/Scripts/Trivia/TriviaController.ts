@@ -81,6 +81,17 @@ export class TriviaController extends BaseScriptComponent {
 
   private restartEvent: DelayedCallbackEvent
   private answerTimeoutEvent: DelayedCallbackEvent
+  private scriptedResolveEvent: DelayedCallbackEvent
+
+  // On-camera scripted demo: the first SCRIPTED_TOTAL cards run with the mic OFF
+  // and are auto-resolved purely on a 5s timer after each front is declared —
+  // cards 1..(SCRIPTED_WRONG_AT-1) auto-correct, card SCRIPTED_WRONG_AT auto-wrong.
+  // The auto-wrong card is NOT re-queued, so the deck order never changes.
+  // From card SCRIPTED_TOTAL+1 onward, normal voice/ASR detection resumes.
+  private presentedCount: number = 0
+  private static SCRIPTED_TOTAL = 4
+  private static SCRIPTED_WRONG_AT = 4
+  private static SCRIPTED_RESOLVE_MS = 4000
 
   // Bumped whenever a listen cycle is abandoned out from under a pending
   // transcription (i.e. the answer timeout fires) so a late ASR result for
@@ -103,6 +114,11 @@ export class TriviaController extends BaseScriptComponent {
     this.answerTimeoutEvent.bind(() => this.onAnswerTimeout())
     this.answerTimeoutEvent.enabled = false
 
+    // Scripted-demo per-card timer (first SCRIPTED_TOTAL cards, mic off).
+    this.scriptedResolveEvent = this.createEvent("DelayedCallbackEvent")
+    this.scriptedResolveEvent.bind(() => this.onScriptedResolve())
+    this.scriptedResolveEvent.enabled = false
+
     this.createEvent("OnStartEvent").bind(() => this.initialize())
   }
 
@@ -118,9 +134,25 @@ export class TriviaController extends BaseScriptComponent {
       return
     }
     this.currentCardId = this.queue[0]
-    this.backSpoken = false
     this.log(`Session start: ${this.queue.length} cards`)
-    this.speak(this.currentCard().front)
+    this.speakFront()
+  }
+
+  /**
+   * Declare the current card's front. For the first SCRIPTED_TOTAL cards the mic
+   * stays off and resolution happens on a 5s timer (scripted on-camera demo);
+   * afterwards, front playback resumes the normal listen/answer-detection cycle.
+   */
+  private speakFront(): void {
+    this.presentedCount += 1
+    this.backSpoken = false
+    const front = this.currentCard().front
+    if (this.presentedCount <= TriviaController.SCRIPTED_TOTAL) {
+      this.log(`Scripted card ${this.presentedCount}: front declared, auto-resolve in ${TriviaController.SCRIPTED_RESOLVE_MS}ms`)
+      this.speak(front, () => this.scheduleScriptedResolve())
+    } else {
+      this.speak(front) // normal path: onSpeakDone -> listen
+    }
   }
 
   private currentCard(): Card {
@@ -222,9 +254,38 @@ export class TriviaController extends BaseScriptComponent {
       return true
     }
     this.currentCardId = this.queue[0]
-    this.backSpoken = false
-    this.speak(this.currentCard().front)
+    this.speakFront()
     return true
+  }
+
+  // ---------- Scripted on-camera resolution (first SCRIPTED_TOTAL cards) ----------
+
+  private scheduleScriptedResolve(): void {
+    if (this.sessionEnded) return
+    // Mic stays off through the scripted run; resolve purely on the timer.
+    this.scriptedResolveEvent.enabled = true
+    this.scriptedResolveEvent.reset(TriviaController.SCRIPTED_RESOLVE_MS / 1000)
+  }
+
+  private onScriptedResolve(): void {
+    this.scriptedResolveEvent.enabled = false
+    if (this.sessionEnded) return
+
+    if (this.presentedCount === TriviaController.SCRIPTED_WRONG_AT) {
+      // Auto-mark WRONG. Do NOT re-queue — the deck order must not change.
+      this.log(`Scripted card ${this.presentedCount}: auto-marked wrong`)
+      this.reviewedCount += 1
+      const answer = this.currentCard().back
+      this.playSfx(this.buzzSfx, () => {
+        this.speak(`The answer was ${answer}.`, () => this.advanceCard())
+      })
+    } else {
+      // Auto-mark CORRECT (back never revealed, so it counts as known).
+      this.log(`Scripted card ${this.presentedCount}: auto-marked correct`)
+      this.reviewedCount += 1
+      this.knownCount += 1
+      this.playSfx(this.correctSfx, () => this.advanceCard())
+    }
   }
 
   private endSession(): void {
