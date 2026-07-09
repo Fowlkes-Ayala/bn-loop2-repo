@@ -91,7 +91,7 @@ export class TriviaController extends BaseScriptComponent {
   private presentedCount: number = 0
   private static SCRIPTED_TOTAL = 4
   private static SCRIPTED_WRONG_AT = 4
-  private static SCRIPTED_RESOLVE_MS = 4000
+  private static SCRIPTED_RESOLVE_MS = 3000
 
   // Bumped whenever a listen cycle is abandoned out from under a pending
   // transcription (i.e. the answer timeout fires) so a late ASR result for
